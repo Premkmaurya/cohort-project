@@ -46,3 +46,4 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(400);
   });
 });
+
