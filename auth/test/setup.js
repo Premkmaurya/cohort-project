@@ -5,17 +5,14 @@ let mongo;
 
 beforeAll(async () => {
   // Start in-memory MongoDB
-  mongo = await MongoMemoryServer.create();
+  mongo = MongoMemoryServer.create();
   const uri = mongo.getUri();
-
   process.env.MONGO_URI = uri; // ensure app's db connector uses this
   process.env.JWT_SECRET_KEY = "test_jwt_secret"; // set a test JWT secret
 
-  await mongoose.connect(uri);
+  await mongoose.connect("mongodb url");
 });
-// File: auth/test/setup.js
 
-// ... (beforeAll remains the same)
 
 afterEach(async () => {
   // FIX: Check if the connection to the DB is available before trying to access it.
