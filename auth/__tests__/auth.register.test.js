@@ -8,15 +8,7 @@ let mongoServer;
 
 beforeAll(async () => {
   try {
-    mongoServer = await MongoMemoryServer.create({
-      binary: {
-        downloadDir: "./.mongodb-binaries",
-        debug: true,
-      },
-      instance: {
-        debug: true,
-      },
-    });
+    mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     process.env.MONGO_URI = uri;
     await mongoose.connect(process.env.MONGO_URI, {
