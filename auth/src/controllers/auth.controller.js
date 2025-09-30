@@ -74,7 +74,16 @@ async function userLogin(req, res) {
     });
   }
   const token = jwt.sign(
-    { id: user._id, username: user.username },
+    {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      fullName: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+    },
     process.env.JWT_SECRET_KEY
   );
   res.cookie("token", token);
