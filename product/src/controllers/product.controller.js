@@ -1,6 +1,9 @@
 const productModel = require("../models/product.model");
 const uploadImage = require("../services/imagekit.service");
 
+
+// create product controller
+
 async function createProduct(req, res) {
   const { title, description, priceAmount, priceCurrency = "INR" } = req.body;
   const seller = req.user.id;
@@ -38,6 +41,8 @@ async function createProduct(req, res) {
   }
 }
 
+// get all products controller
+
 async function getAllProducts(req, res) {
   const { q, minPrice, maxPrice, skip = 0, limit = 20 } = req.query;
 
@@ -69,6 +74,8 @@ async function getAllProducts(req, res) {
   }
 }
 
+// get one product controller
+
 async function getProductById(req, res) {
   const { id } = req.params;
 
@@ -78,6 +85,8 @@ async function getProductById(req, res) {
   }
   return res.status(200).json({ product: product });
 }
+
+// update product controller
 
 async function updateProduct(req, res) {
   const { id } = req.params;
@@ -112,9 +121,45 @@ async function updateProduct(req, res) {
     .json({ message: "Product updated successfully", product });
 }
 
+// delete product controller
+
+async function deleteProduct(req, res) {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid product id" });
+  }
+
+  try {
+    await productModel.findOneAndDelete({ _id: id, seller: req.user.id });
+    return res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deleting product", error });
+  }
+}
+
+// get seller's product controller
+
+async function getProductsBySeller(req, res) {
+  const id = req.user.id;
+  const { skip = 0, limit = 20 } = req.query;
+
+
+  try {
+    const products = await productModel.find({ seller: id })
+      .skip(skip)
+      .limit(Math.min(Number(limit),20));
+    return res.status(200).json({ products: products });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching products", error });
+  }
+}
+
 module.exports = {
   createProduct,
   getAllProducts,
   getProductById,
-  updateProduct
+  updateProduct,
+  deleteProduct,
+  getProductsBySeller
 };

@@ -13,10 +13,18 @@ router.post("/",createAuthMiddleware(["admin","seller"]),upload.array("images",5
 // GET /api/products/
 router.get("/", productController.getAllProducts);
 
+// PATCH /api/products/:id
+router.patch("/:id", createAuthMiddleware(["seller"]), productController.updateProduct);
+
+// DELETE /api/products/:id
+router.delete("/:id", createAuthMiddleware(["seller"]), productController.deleteProduct);
+
+// Get /api/seller/
+router.get("/seller",createAuthMiddleware(["seller"]), productController.getProductsBySeller);
+
 // GET /api/products/:id
 router.get("/:id", productController.getProductById);
 
-// PATCH /api/products/:id
-router.patch("/:id", createAuthMiddleware(["seller"]), productController.updateProduct);
+
 
 module.exports = router;
