@@ -8,7 +8,6 @@ const addressSchema = new mongoose.Schema({
   country: String,
 });
 
-
 const orderSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -57,13 +56,9 @@ const orderSchema = new mongoose.Schema({
       required: true,
     },
   },
-  shippingAddress: {
-      type:addressSchema,
-      required:true
-  }
+  shippingAddress: [{ type: addressSchema, required: true }],
 });
 
-const orderModel = new mongoose.model("order",orderSchema)
-
+const orderModel = new mongoose.model("order", orderSchema);
 
 module.exports = orderModel;

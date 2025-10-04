@@ -31,7 +31,7 @@ async function userRegister(req, res) {
     password: hash,
     fullName: { firstName, lastName },
     role,
-    address,
+    adresses
   });
 
   const token = jwt.sign(
@@ -44,6 +44,7 @@ async function userRegister(req, res) {
         firstName: user.firstName,
         lastName: user.lastName,
       },
+      addresses:user.addresses
     },
     process.env.JWT_SECRET_KEY
   );
@@ -83,6 +84,7 @@ async function userLogin(req, res) {
         firstName: user.firstName,
         lastName: user.lastName,
       },
+      addresses:user.addresses
     },
     process.env.JWT_SECRET_KEY
   );

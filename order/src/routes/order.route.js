@@ -6,5 +6,7 @@ const router = express.Router()
 
 router.post("/",authMiddleware(["user"]), orderController.createOrder)
 
+router.get('/',authMiddleware(["user"]),orderController.getOrder)
+
 
 module.exports = router;
