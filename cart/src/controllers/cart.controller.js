@@ -6,13 +6,15 @@ async function addToCart(req, res) {
   const { productId, quantity = 1 } = req.body;
   const user = req.user;
 
-  const cart = await cartModel.findOne({ userId: user.id });
+  let cart = await cartModel.findOne({ userId: user.id });
   if (!cart) {
     const createCart = new cartModel({
       userId: user.id,
       items: [],
     });
+    cart = createCart;
   }
+  console.log(cart)
   const existingItemIndex = cart.items.findIndex(
     (item) => item.productId.toString() === productId
   );
@@ -64,7 +66,7 @@ async function updateCartItem(req, res) {
     return res.status(404).json({ message: "Item not found in cart" });
   }
 
-  cart.items[itemIndex].quantity = quantity;
+  cart.items[itemIndex].quantity += quantity;
   await cart.save();
   return res.status(200).json({
     message: "Cart updated successfully",
@@ -125,4 +127,5 @@ module.exports = {
   getCart,
   updateCartItem,
   removeCartItem,
+  clearCart
 };

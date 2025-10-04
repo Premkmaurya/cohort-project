@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const {body,validationResult} = require("express-validator")
+const {body,validationResult, param} = require("express-validator")
 
 
 async function responseWithValidationErrors(req,res,next){
@@ -23,7 +23,7 @@ const validateCart = [
     responseWithValidationErrors
 ]
 const validateCartProduct = [
-    body("productId")
+    param("productId")
         .isString()
         .withMessage("Product ID must be a string")
         .custom((value) => mongoose.Types.ObjectId.isValid(value))
