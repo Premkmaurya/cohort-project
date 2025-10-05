@@ -2,11 +2,10 @@ const orderModel = require("../models/order.model");
 const axios = require("axios");
 
 // create order
-
 async function createOrder(req, res) {
   const user = req.user;
   const token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
-
+  const {street,city,pinCode,country,state} = req.body;
   try {
     const cartResponse = await axios.get("http://localhost:3002/api/cart", {
       headers: {
@@ -31,18 +30,18 @@ async function createOrder(req, res) {
     let totalPrice = 0;
 
     const orderItems = cartResponse.data.cart.items.map((item, idx) => {
-      const product = products.find((p) => p.product._id == item.productId);
-      if (product.stock < item.quantity) {
-        throw new Error(`${product.title} is out of stock.`);
+      const productResponse = products.find((p) => p.product._id == item.productId);
+      if (productResponse.stock < item.quantity && !productResponse) {
+        throw new Error(`${productResponse.title} is out of stock.`);
       }
-      const total = product.product.price.amount * item.quantity;
+      const total = productResponse.product.price.amount * item.quantity;
       totalPrice += total;
       return {
-        productId: item.productId,
+        productId: item.productId, 
         quantity: item.quantity,
         price: {
-          amount: product.product.price.amount,
-          currency: product.product.price.currency,
+          amount: productResponse.product.price.amount,
+          currency: productResponse.product.price.currency,
         },
       };
     });
@@ -55,7 +54,13 @@ async function createOrder(req, res) {
         amount: totalPrice,
         currency: orderItems[0].price.currency,
       },
-      shippingAddress: user.addresses,
+      shippingAddress: {
+        street,
+        city,
+        pinCode,
+        state,
+        country,
+      },
     });
 
     res.status(200).json({
@@ -67,25 +72,99 @@ async function createOrder(req, res) {
   }
 }
 
-// get order
+// get orders
+async function getOrder(req, res) {
+  const user = req.user;
+  const { skip=0, limit = 10 } = req.body;
 
-async function getOrder(req,res){
-   const user = req.user;
-  const token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
-
-  const orders = await orderModel.find({userId:user.id});
-  if(!orders){
+  const orders = await orderModel
+    .find({ userId: user.id })
+    .skip(skip)
+    .limit(Math.min(Number(limit), 10));
+  if (!orders) {
     return res.status(400).json({
-      message:"no order found."
-    })
+      message: "no order found.",
+    });
   }
   res.status(200).json({
-    message:"orders fetch successfully.",
+    message: "orders fetch successfully.",
     orders,
+  });
+}
+
+// get order by id
+async function getOrderById(req, res) {
+  const { id } = req.params;
+  const user = req.user;
+  const order = await orderModel.findOne({ _id: id, userId: user.id });
+  if (!order) {
+    return res.status(400).json({
+      message: "no order found.",
+    });
+  }
+  res.status(200).json({
+    message: "order fetch successfully.",
+    order,
+  });
+}
+
+// cancel order by id
+async function cancelOrderById(req,res){
+  const {id} = req.params;
+  const user = req.user;
+
+  const order = await orderModel.findOne({_id:id,userId:user.id});
+
+  if(!order){
+    return res.status(400).json({
+      message:"no order found with this id."
+    })
+  }
+
+  order.status = "cancelled";
+  await order.save();
+  res.status(200).json({
+    message:"order cancelled successfully.",
+    order,
+  })
+}
+
+// update order address
+async function updateOrderAddress(req,res){
+  const {id} = req.params;
+  const user = req.user;
+  const {street,city,pinCode,state,country}= req.body;
+  const order = await orderModel.findOne({_id:id,userId:user.id});
+
+  if(!order){
+    return res.status(403).json({
+      message:"no order found by this id."
+    })
+  }
+
+  if(order.status === "delivered" || order.status === "cancelled"){
+    return res.status(400).json({
+      message:`you can't update address for ${order.status} order.`
+    })
+  }
+  order.shippingAddress[0] = {
+    street:street!==undefined? street : order.shippingAddress[0].street,
+    city:city!==undefined? city : order.shippingAddress[0].city,
+    pinCode:pinCode!==undefined? pinCode : order.shippingAddress[0].pinCode,
+    state:state!==undefined? state : order.shippingAddress[0].state,
+    country:country!==undefined? country : order.shippingAddress[0].country
+  }
+  await order.save();
+  res.status(200).json({
+    message:"order address updated successfully.",
+    order,
   })
 }
 
 module.exports = {
   createOrder,
   getOrder,
+  getOrderById,
+  cancelOrderById,
+  updateOrderAddress
 };
