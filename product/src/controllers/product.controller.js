@@ -1,7 +1,6 @@
 const productModel = require("../models/product.model");
 const uploadImage = require("../services/imagekit.service");
 
-t 
 // create product controller
 
 async function createProduct(req, res) {
