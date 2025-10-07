@@ -70,4 +70,23 @@ const add_to_cart = tool(
   }
 );
 
-module.exports = { add_to_cart, search_products };
+const clear_cart = tool(
+  async ({ token }) => {
+    try {
+      const response = await axios.delete("http://localhost:3002/api/cart", {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+      return JSON.stringify(response.data);
+    } catch (err) {
+      return new Error("cart not found.");
+    }
+  },
+  {
+    name: "clear_cart",
+    description: "clear all the product from the cart.",
+  }
+);
+
+module.exports = { add_to_cart, search_products, clear_cart };

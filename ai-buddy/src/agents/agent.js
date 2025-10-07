@@ -29,13 +29,12 @@ const graph = new StateGraph(MessagesAnnotation)
           token: config.metadata.token,
         });
 
-        // --- FIX IS HERE ---
         return new ToolMessage({
           content: toolResult,
-          tool_call_id: call.id, // <-- Add the original request ID
-          name: call.name, // <-- Use the correct property 'name' for the tool function name
+          tool_call_id: call.id, 
+          name: call.name,
         });
-        // ------------------
+
       })
     );
     state.messages.push(...toolCallResult);
@@ -43,7 +42,7 @@ const graph = new StateGraph(MessagesAnnotation)
   })
   .addNode("chat", async (state, config) => {
     const response = await model.invoke(state.messages, {
-      tools: [tools.add_to_cart, tools.search_products],
+      tools: [tools.add_to_cart, tools.search_products,tools.clear_cart],
     });
 
     state.messages.push(
