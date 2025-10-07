@@ -29,7 +29,13 @@ const graph = new StateGraph(MessagesAnnotation)
           token: config.metadata.token,
         });
 
-        return new ToolMessage({ content: toolResult, toolName: call.name });
+        // --- FIX IS HERE ---
+        return new ToolMessage({
+          content: toolResult,
+          tool_call_id: call.id, // <-- Add the original request ID
+          name: call.name, // <-- Use the correct property 'name' for the tool function name
+        });
+        // ------------------
       })
     );
     state.messages.push(...toolCallResult);

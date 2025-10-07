@@ -26,8 +26,8 @@ async function initSocketServer(httpServer) {
 
 
 
-    socket.on("messages", (data) => {
-      agent.invoke(
+    socket.on("messages", async (data) => {
+      const agentResponse = await agent.invoke(
         {
           messages: [
             {
@@ -42,6 +42,9 @@ async function initSocketServer(httpServer) {
           },
         }
       );
+      const lastMessage = agentResponse.messages[agentResponse.messages.length-1]
+      console.log(agentResponse.messages)
+      socket.emit("messages",lastMessage.content)
     });
   });
 }
