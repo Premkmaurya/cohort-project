@@ -1,6 +1,7 @@
 const paymentModel = require("../models/payment.model");
 const axios = require("axios");
 const Razorpay = require("razorpay");
+const { publishToQueue } = require("../broker/broker");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -29,6 +30,7 @@ async function createPayment(req, res) {
       user: req.user.id,
       price,
     });
+
     res.status(200).json({
       message: "payment created successfully.",
       createPayment,
@@ -36,8 +38,8 @@ async function createPayment(req, res) {
   } catch (error) {
     console.log("something has been broken.", err);
     return res.status(500).json({
-        message:"Internal server error."
-    })
+      message: "Internal server error.",
+    });
   }
 }
 
@@ -57,34 +59,51 @@ async function verifyPayment(req, res) {
       secret
     );
 
-    if(!result){
-        return res.status(404).json({
-            message:"Invalid signature"
-        })
+    if (!result) {
+      return res.status(404).json({
+        message: "Invalid signature",
+      });
     }
 
-    const payment = await paymentModel.findOne({razorpayId,status:"pending"})
+    const payment = await paymentModel.findOne({
+      razorpayId,
+      status: "pending",
+    });
 
-    if(!payment){
-        return rs.status(400).json({
-            message:"payment not found."
-        })
+    if (!payment) {
+      return rs.status(400).json({
+        message: "payment not found.",
+      });
     }
 
     payment.status = "completed";
     payment.signature = signature;
-    payment.paymentId = razorpayPaymentId
+    payment.paymentId = razorpayPaymentId;
 
-    await payment.save()
+    await publishToQueue("PAYMENT_COMPLETED_NOTIFICATION", {
+      email: req.user.email,
+      orderId: payment.order,
+      paymentId: payment.paymentId,
+      amount: payment.price.amount / 100,
+      currency: payment.price.currency,
+      fullName: req.user.fullName,
+    });
+
+    await payment.save();
     res.status(200).json({
-        message:"payment successfully completed."
-    })
-
+      message: "payment successfully completed.",
+    });
   } catch (error) {
     console.log(error);
+    await publishToQueue("PAYMENT_FAILED_NOTIFICATION", {
+      email: req.user.email,
+      paymentId: paymentId,
+      orderId: razorpayOrderId,
+      fullName: req.user.fullName,
+    });
     return res.status(500).json({
-        message:"internal server error"
-    })
+      message: "internal server error",
+    });
   }
 }
 
