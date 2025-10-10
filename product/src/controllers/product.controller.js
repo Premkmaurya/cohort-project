@@ -7,6 +7,7 @@ const {publishToQueue} = require("../broker/broker")
 async function createProduct(req, res) {
   const { title, description, priceAmount, priceCurrency = "INR" } = req.body;
   const seller = req.user.id;
+  const sellerEmail = req.user.email;
 
   const price = {
     amount: Number(priceAmount),
@@ -33,7 +34,10 @@ async function createProduct(req, res) {
       seller,
     });
 
-    await publishToQueue("SELLER_DASHBOARD_PRODUCT_CREATED",newProduct)
+    await Promise.all([
+      publishToQueue("SELLER_DASHBOARD_PRODUCT_CREATED",newProduct),
+      publishToQueue("PRODUCT_CREATED_NOTIFICATION", { ...newProduct, sellerEmail }),
+    ])
 
     return res
       .status(201)

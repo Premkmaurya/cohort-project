@@ -65,7 +65,10 @@ async function createOrder(req, res) {
       },
     });
 
-    await publishToQueue("SELLER_DASHBOARD_ORDER_CREATED",order);
+    await Promise.all([
+      publishToQueue("ORDER_CREATED_NOTIFICATION",order),
+      publishToQueue("SELLER_DASHBOARD_ORDER_CREATED",order)
+    ])
 
     res.status(200).json({
       message: "fetch successfully.",

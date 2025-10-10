@@ -32,7 +32,7 @@ async function subscribeToQueue(queueName, callback) {
 
   channel.consume(queueName, async (msg) => {
     if (msg !== null) {
-      const data = JSON.parse(msg.content.ToString());
+      const data = JSON.parse(msg.content.toString());
       await callback(data);
       channel.ack(msg);
     }
