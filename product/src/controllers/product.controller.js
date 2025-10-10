@@ -1,5 +1,6 @@
 const productModel = require("../models/product.model");
 const uploadImage = require("../services/imagekit.service");
+const {publishToQueue} = require("../broker/broker")
 
 // create product controller
 
@@ -31,6 +32,8 @@ async function createProduct(req, res) {
       images,
       seller,
     });
+
+    await publishToQueue("SELLER_DASHBOARD_PRODUCT_CREATED",newProduct)
 
     return res
       .status(201)

@@ -2,7 +2,7 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const redis = require("../db/redis");
-const {publishToQueue} = require('../broker/broker')
+const { publishToQueue } = require("../broker/broker");
 
 async function userRegister(req, res) {
   const {
@@ -32,16 +32,18 @@ async function userRegister(req, res) {
     password: hash,
     fullName: { firstName, lastName },
     role,
-    addresses
+    addresses,
   });
 
-  publishToQueue('AUTH_USER_REGISTER_NOTIFICATION',{
-    id:user._id,
-    email:user.email,
-    username:user.username,
-    fullName:user.fullName
-  })
-
+  await Promise.all([
+    publishToQueue("AUTH_USER_REGISTER_NOTIFICATION", {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      fullName: user.fullName,
+    }),
+    publishToQueue("SELLER_DASHBOARD_USER_REGISTERED", user),
+  ]);
 
   const token = jwt.sign(
     {
@@ -53,7 +55,7 @@ async function userRegister(req, res) {
         firstName: user.firstName,
         lastName: user.lastName,
       },
-      addresses:user.addresses
+      addresses: user.addresses,
     },
     process.env.JWT_SECRET_KEY
   );
@@ -93,7 +95,7 @@ async function userLogin(req, res) {
         firstName: user.firstName,
         lastName: user.lastName,
       },
-      addresses:user.addresses
+      addresses: user.addresses,
     },
     process.env.JWT_SECRET_KEY
   );

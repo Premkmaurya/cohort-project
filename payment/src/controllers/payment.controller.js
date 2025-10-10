@@ -30,7 +30,7 @@ async function createPayment(req, res) {
       user: req.user.id,
       price,
     });
-
+    await publishToQueue("SELLER_DASHBOARD_PAYMENT_CREATED", payment);
     res.status(200).json({
       message: "payment created successfully.",
       createPayment,
@@ -80,14 +80,17 @@ async function verifyPayment(req, res) {
     payment.signature = signature;
     payment.paymentId = razorpayPaymentId;
 
-    await publishToQueue("PAYMENT_COMPLETED_NOTIFICATION", {
-      email: req.user.email,
-      orderId: payment.order,
-      paymentId: payment.paymentId,
-      amount: payment.price.amount / 100,
-      currency: payment.price.currency,
-      fullName: req.user.fullName,
-    });
+    await Promise.all([
+      publishToQueue("PAYMENT_COMPLETED_NOTIFICATION", {
+        email: req.user.email,
+        orderId: payment.order,
+        paymentId: payment.paymentId,
+        amount: payment.price.amount / 100,
+        currency: payment.price.currency,
+        fullName: req.user.fullName,
+      }),
+      publishToQueue("SELLER_DASHBOARD_PAYMENT_UPDATED", payment)
+    ]);
 
     await payment.save();
     res.status(200).json({
