@@ -7,6 +7,11 @@ const app = express();
 app.use(cookieParser());
 app.use(express.json());
 
+app.get('/',(req,res)=>{
+    res.status(200).json({
+        messsage:"product service is running."
+    })
+})
 
 app.use('/api/products', productRoutes);
 
