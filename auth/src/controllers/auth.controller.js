@@ -2,6 +2,7 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const redis = require("../db/redis");
+const {publishToQueue} = require('../broker/broker')
 
 async function userRegister(req, res) {
   const {
@@ -10,7 +11,7 @@ async function userRegister(req, res) {
     password,
     fullName: { firstName, lastName },
     role,
-    address,
+    addresses,
   } = req.body;
 
   const isUserExist = await userModel.findOne({
@@ -31,8 +32,16 @@ async function userRegister(req, res) {
     password: hash,
     fullName: { firstName, lastName },
     role,
-    adresses
+    addresses
   });
+
+  publishToQueue('AUTH_USER_REGISTER_NOTIFICATION',{
+    id:user._id,
+    email:user.email,
+    username:user.username,
+    fullName:user.fullName
+  })
+
 
   const token = jwt.sign(
     {
